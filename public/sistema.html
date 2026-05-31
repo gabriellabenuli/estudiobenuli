@@ -2561,20 +2561,6 @@
 </div>
 
 <script>
-    // Global variables - must be before any HTML onclick handlers
-    var clientes = [];
-    var artigos = [];
-    var todos = [];
-    var registrosHoras = [];
-    var propostasEnviadas = [];
-    var desdobramentos = [];
-    var documentos = [];
-    var tipoOnboarding = 'iv';
-    var tipoProjSelecionado = 'iv';
-    var artigoAtual = null;
-    var projetoAtivoId = null;
-    var clienteAtivoId = null;
-
     const cronogramaIV = [
         { etapa: 'Burocracia', dias: '3 dias', itens: ['Solicitação de dados para contrato', 'Envio do contrato', 'Assinatura do contrato', 'Confirmação de pagamento', 'Emissão de nota fiscal', 'Envio de invoice'] },
         { etapa: 'Imersão', dias: '7 dias', itens: ['Envio de Briefing', 'Reunião de imersão de marca', 'Diagnóstico de marca'] },
@@ -4235,58 +4221,60 @@
     // LOCALSTORAGE — persistência de dados
     // =============================================
 
-    const API_MAP = {
-        'clientes': '/api/clientes',
-        'projetos': '/api/projetos',
-        'todos': '/api/todos',
-        'artigos': '/api/artigos',
-        'propostas_enviadas': '/api/propostas',
-        'registros_horas': '/api/registros-horas',
-        'documentos': '/api/documentos',
-        'desdobramentos': '/api/desdobramentos',
-        'configuracoes': '/api/configuracoes',
-    };
-
     const LS = {
         get: (key) => { try { return JSON.parse(localStorage.getItem(key)) } catch { return null } },
         set: (key, val) => {
             localStorage.setItem(key, JSON.stringify(val));
-            // Sync to API in background
-            if (API_MAP[key]) {
-                const endpoint = API_MAP[key];
-                if (key === 'configuracoes') {
-                    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }).catch(() => {});
-                } else if (Array.isArray(val)) {
+            // Sync to Neon API in background (non-blocking)
+            const endpoints = {
+                'clientes': '/api/clientes',
+                'projetos': '/api/projetos',
+                'todos': '/api/todos',
+                'artigos': '/api/artigos',
+                'propostas_enviadas': '/api/propostas',
+                'registros_horas': '/api/registros-horas',
+                'documentos': '/api/documentos',
+                'desdobramentos': '/api/desdobramentos',
+            };
+            if (endpoints[key]) {
+                const endpoint = endpoints[key];
+                if (Array.isArray(val)) {
                     val.forEach(item => {
                         if (item?.id) {
-                            fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) }).catch(() => {});
+                            fetch(endpoint, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(item)
+                            }).catch(() => {});
                         }
                     });
                 }
             }
         },
     };
-
-    // Carrega dados do banco em background
-    async function loadFromDB() {
-        const chaves = ['clientes', 'projetos', 'todos', 'artigos', 'propostas_enviadas', 'registros_horas', 'documentos', 'desdobramentos'];
-        await Promise.all(chaves.map(key =>
-            fetch(API_MAP[key]).then(r => r.json()).then(data => {
-                if (Array.isArray(data) && data.length > 0) {
-                    clientes = key === 'clientes' ? data : clientes;
-                    artigos = key === 'artigos' ? data : artigos;
-                    todos = key === 'todos' ? data : todos;
-                    registrosHoras = key === 'registros_horas' ? data : registrosHoras;
-                    propostasEnviadas = key === 'propostas_enviadas' ? data : propostasEnviadas;
-                    desdobramentos = key === 'desdobramentos' ? data : desdobramentos;
-                    documentos = key === 'documentos' ? data : documentos;
-                }
-            }).catch(() => {})
-        ));
-    }
     
-    // Load DB quando página inicia
-    document.addEventListener('DOMContentLoaded', loadFromDB);
+    // Load from Neon when page starts (non-blocking)
+    (async () => {
+        const endpoints = {
+            'clientes': '/api/clientes',
+            'projetos': '/api/projetos',
+            'todos': '/api/todos',
+            'artigos': '/api/artigos',
+            'propostas_enviadas': '/api/propostas',
+            'registros_horas': '/api/registros-horas',
+            'documentos': '/api/documentos',
+            'desdobramentos': '/api/desdobramentos',
+        };
+        for (const [key, endpoint] of Object.entries(endpoints)) {
+            try {
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    localStorage.setItem(key, JSON.stringify(data));
+                }
+            } catch (e) {}
+        }
+    })();
 
     // --- CLIENTES ---
     let clientes = LS.get('clientes') || [];
