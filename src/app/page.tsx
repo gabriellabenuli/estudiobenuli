@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import App from '@/components/App';
 
 export default function Home() {
-  redirect('/sistema.html');
+  return <App />;
 }
