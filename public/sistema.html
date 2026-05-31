@@ -2561,6 +2561,20 @@
 </div>
 
 <script>
+    // Global variables - must be before any HTML onclick handlers
+    var clientes = [];
+    var artigos = [];
+    var todos = [];
+    var registrosHoras = [];
+    var propostasEnviadas = [];
+    var desdobramentos = [];
+    var documentos = [];
+    var tipoOnboarding = 'iv';
+    var tipoProjSelecionado = 'iv';
+    var artigoAtual = null;
+    var projetoAtivoId = null;
+    var clienteAtivoId = null;
+
     const cronogramaIV = [
         { etapa: 'Burocracia', dias: '3 dias', itens: ['Solicitação de dados para contrato', 'Envio do contrato', 'Assinatura do contrato', 'Confirmação de pagamento', 'Emissão de nota fiscal', 'Envio de invoice'] },
         { etapa: 'Imersão', dias: '7 dias', itens: ['Envio de Briefing', 'Reunião de imersão de marca', 'Diagnóstico de marca'] },
@@ -4233,15 +4247,11 @@
         'configuracoes': '/api/configuracoes',
     };
 
-    // Always use API as source of truth
     const LS = {
-        get: (key) => {
-            // Try localStorage first for immediate response
-            try { return JSON.parse(localStorage.getItem(key)) } catch { return null }
-        },
+        get: (key) => { try { return JSON.parse(localStorage.getItem(key)) } catch { return null } },
         set: (key, val) => {
-            // Always save to API (this is the source of truth)
-            localStorage.setItem(key, JSON.stringify(val)); // backup
+            localStorage.setItem(key, JSON.stringify(val));
+            // Sync to API in background
             if (API_MAP[key]) {
                 const endpoint = API_MAP[key];
                 if (key === 'configuracoes') {
@@ -4257,32 +4267,26 @@
         },
     };
 
-    // Load from API on startup - BEFORE rendering anything
-    let dbLoadComplete = false;
+    // Carrega dados do banco em background
     async function loadFromDB() {
-        try {
-            const promises = ['clientes', 'projetos', 'todos', 'artigos', 'propostas_enviadas', 'registros_horas', 'documentos', 'desdobramentos'].map(key =>
-                fetch(API_MAP[key])
-                    .then(r => r.json())
-                    .then(data => {
-                        if (Array.isArray(data) && data.length > 0) {
-                            localStorage.setItem(key, JSON.stringify(data));
-                        }
-                    })
-                    .catch(() => {})
-            );
-            await Promise.all(promises);
-        } catch (e) {}
-        dbLoadComplete = true;
+        const chaves = ['clientes', 'projetos', 'todos', 'artigos', 'propostas_enviadas', 'registros_horas', 'documentos', 'desdobramentos'];
+        await Promise.all(chaves.map(key =>
+            fetch(API_MAP[key]).then(r => r.json()).then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    clientes = key === 'clientes' ? data : clientes;
+                    artigos = key === 'artigos' ? data : artigos;
+                    todos = key === 'todos' ? data : todos;
+                    registrosHoras = key === 'registros_horas' ? data : registrosHoras;
+                    propostasEnviadas = key === 'propostas_enviadas' ? data : propostasEnviadas;
+                    desdobramentos = key === 'desdobramentos' ? data : desdobramentos;
+                    documentos = key === 'documentos' ? data : documentos;
+                }
+            }).catch(() => {})
+        ));
     }
     
-    // Load DB BEFORE DOMContentLoaded fires (so data is ready when page renders)
-    loadFromDB().then(() => {
-        // Trigger DOMContentLoaded handlers after data is loaded
-        if (!document.readyState === 'loading') {
-            document.dispatchEvent(new Event('DOMContentLoaded'));
-        }
-    })
+    // Load DB quando página inicia
+    document.addEventListener('DOMContentLoaded', loadFromDB);
 
     // --- CLIENTES ---
     let clientes = LS.get('clientes') || [];
