@@ -2396,7 +2396,7 @@
             <button class="tipo-btn" onclick="selecionarTipo(event,'cartao')"><svg width="16" height="16" viewBox="0 0 20 20"><rect x="2" y="4" width="16" height="12" rx="1" stroke="currentColor" fill="none" stroke-width="1.5"></rect><path d="M2 8h16" stroke="currentColor" stroke-width="1.5"></path></svg><span>Cartão</span></button>
             <button class="tipo-btn" onclick="selecionarTipo(event,'aporte')"><svg width="16" height="16" viewBox="0 0 20 20"><path d="M2 6h16v10H2z" stroke="currentColor" fill="none" stroke-width="1.5"></path><path d="M6 6V4a1 1 0 011-1h6a1 1 0 011 1v2" stroke="currentColor" stroke-width="1.5"></path></svg><span>Aporte</span></button>
         </div>
-        <form onsubmit="salvarLancamento(event)">
+        <form onsubmit="handleSubmit(event)">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                 <div class="form-group" style="margin-bottom:0;"><label class="form-label">Descrição</label><input type="text" class="form-input" placeholder="Ex: Supermercado" required=""></div>
                 <div class="form-group" style="margin-bottom:0;"><label class="form-label">Valor (R$)</label><input type="number" class="form-input" placeholder="0,00" step="0.01" required=""></div>
@@ -2546,7 +2546,7 @@
 <div id="novoClienteModal" class="modal">
     <div class="modal-content">
         <div class="modal-header"><h2 class="modal-title">Novo Cliente</h2><button class="modal-close" onclick="closeModal('novoClienteModal')">×</button></div>
-        <form onsubmit="salvarCliente(event)">
+        <form onsubmit="handleSubmit(event)">
             <div class="form-group"><label class="form-label">Nome</label><input type="text" class="form-input" required=""></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                 <div class="form-group" style="margin-bottom:0;"><label class="form-label">Telefone</label><input type="text" class="form-input"></div>
@@ -4221,7 +4221,6 @@
     // LOCALSTORAGE — persistência de dados
     // =============================================
 
-    // Mapeamento de chave localStorage -> endpoint da API
     const API_MAP = {
         'clientes': '/api/clientes',
         'projetos': '/api/projetos',
@@ -4238,41 +4237,41 @@
         get: (key) => { try { return JSON.parse(localStorage.getItem(key)) } catch { return null } },
         set: (key, val) => {
             localStorage.setItem(key, JSON.stringify(val));
-            // Sincroniza com API em background
+            // Sync to API in background
             if (API_MAP[key]) {
+                const endpoint = API_MAP[key];
                 if (key === 'configuracoes') {
-                    fetch(API_MAP[key], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }).catch(() => {});
-                } else {
-                    const arr = Array.isArray(val) ? val : [val];
-                    // Faz upsert de cada item
-                    arr.forEach(item => {
-                        fetch(API_MAP[key], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) }).catch(() => {});
+                    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }).catch(() => {});
+                } else if (Array.isArray(val)) {
+                    val.forEach(item => {
+                        if (item?.id) {
+                            fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) }).catch(() => {});
+                        }
                     });
                 }
             }
         },
     };
 
-    // Carrega dados da API e popula localStorage
-    async function inicializarDoBanco() {
-        const chaves = ['clientes', 'projetos', 'todos', 'artigos', 'propostas_enviadas', 'registros_horas', 'documentos', 'desdobramentos'];
-        await Promise.all(chaves.map(async (key) => {
-            try {
-                const res = await fetch(API_MAP[key]);
-                if (!res.ok) return;
-                const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    localStorage.setItem(key, JSON.stringify(data));
-                }
-            } catch (e) { /* sem internet, usa localStorage local */ }
-        }));
-        try {
-            const res = await fetch(API_MAP['configuracoes']);
-            if (res.ok) {
-                const cfg = await res.json();
-                if (cfg && Object.keys(cfg).length > 0) localStorage.setItem('configuracoes', JSON.stringify(cfg));
-            }
-        } catch (e) {}
+    // Load from API on startup (background, non-blocking)
+    function loadFromDB() {
+        ['clientes', 'projetos', 'todos', 'artigos', 'propostas_enviadas', 'registros_horas', 'documentos', 'desdobramentos'].forEach(key => {
+            fetch(API_MAP[key])
+                .then(r => r.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        localStorage.setItem(key, JSON.stringify(data));
+                    }
+                })
+                .catch(() => {});
+        });
+    }
+    
+    // Load DB on page load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadFromDB);
+    } else {
+        loadFromDB();
     }
 
     // --- CLIENTES ---
@@ -4448,20 +4447,10 @@
     }
 
     // --- CONECTAR FORMULÁRIO DE CLIENTE ---
-    // salvarCliente is now bound via onsubmit in the form
+    document.querySelector('#novoClienteModal form')?.addEventListener('submit', salvarCliente);
 
     // --- INICIALIZAR DADOS SALVOS ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Carrega dados do banco em background (não bloqueia UI)
-        inicializarDoBanco().catch(() => {});
-        // Re-inicializa variáveis com dados locais primeiro
-        clientes = LS.get('clientes') || [];
-        artigos = LS.get('artigos') || [];
-        todos = LS.get('todos') || [];
-        registrosHoras = LS.get('registros_horas') || [];
-        propostasEnviadas = LS.get('propostas_enviadas') || [];
-        desdobramentos = LS.get('desdobramentos') || [];
-        documentos = LS.get('documentos') || [];
         renderClientes();
         renderizarArtigos();
         renderDocumentos();
