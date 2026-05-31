@@ -2561,6 +2561,48 @@
 </div>
 
 <script>
+    // ===== GLOBAL VARIABLE DECLARATIONS (must be before any HTML that uses them) =====
+    let clientes = [];
+    let artigos = [];
+    let todos = [];
+    let registrosHoras = [];
+    let propostasEnviadas = [];
+    let desdobramentos = [];
+    let documentos = [];
+
+    let tipoProjSelecionado = 'iv';
+    
+    // LS will be defined later
+    const LS = {
+        get: (key) => { try { return JSON.parse(localStorage.getItem(key)) } catch { return null } },
+        set: (key, val) => {
+            localStorage.setItem(key, JSON.stringify(val));
+            // Sincroniza com API em background
+            if (API_MAP && API_MAP[key]) {
+                if (key === 'configuracoes') {
+                    fetch(API_MAP[key], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }).catch(() => {});
+                } else {
+                    const arr = Array.isArray(val) ? val : [val];
+                    arr.forEach(item => {
+                        fetch(API_MAP[key], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) }).catch(() => {});
+                    });
+                }
+            }
+        },
+    };
+    
+    const API_MAP = {
+        'clientes': '/api/clientes',
+        'projetos': '/api/projetos',
+        'todos': '/api/todos',
+        'artigos': '/api/artigos',
+        'propostas_enviadas': '/api/propostas',
+        'registros_horas': '/api/registros-horas',
+        'documentos': '/api/documentos',
+        'desdobramentos': '/api/desdobramentos',
+        'configuracoes': '/api/configuracoes',
+    };
+
     const cronogramaIV = [
         { etapa: 'Burocracia', dias: '3 dias', itens: ['Solicitação de dados para contrato', 'Envio do contrato', 'Assinatura do contrato', 'Confirmação de pagamento', 'Emissão de nota fiscal', 'Envio de invoice'] },
         { etapa: 'Imersão', dias: '7 dias', itens: ['Envio de Briefing', 'Reunião de imersão de marca', 'Diagnóstico de marca'] },
@@ -3890,7 +3932,7 @@
         });
     }
 
-    let tipoOnboarding = 'iv';
+
 
     function iniciarOnboarding(tipo) {
         tipoOnboarding = tipo;
@@ -4221,37 +4263,7 @@
     // LOCALSTORAGE — persistência de dados
     // =============================================
 
-    // Mapeamento de chave localStorage -> endpoint da API
-    const API_MAP = {
-        'clientes': '/api/clientes',
-        'projetos': '/api/projetos',
-        'todos': '/api/todos',
-        'artigos': '/api/artigos',
-        'propostas_enviadas': '/api/propostas',
-        'registros_horas': '/api/registros-horas',
-        'documentos': '/api/documentos',
-        'desdobramentos': '/api/desdobramentos',
-        'configuracoes': '/api/configuracoes',
-    };
-
-    const LS = {
-        get: (key) => { try { return JSON.parse(localStorage.getItem(key)) } catch { return null } },
-        set: (key, val) => {
-            localStorage.setItem(key, JSON.stringify(val));
-            // Sincroniza com API em background
-            if (API_MAP[key]) {
-                if (key === 'configuracoes') {
-                    fetch(API_MAP[key], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(val) }).catch(() => {});
-                } else {
-                    const arr = Array.isArray(val) ? val : [val];
-                    // Faz upsert de cada item
-                    arr.forEach(item => {
-                        fetch(API_MAP[key], { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(item) }).catch(() => {});
-                    });
-                }
-            }
-        },
-    };
+    // LS is now defined at the top of script
 
     // Carrega dados da API e popula localStorage
     async function inicializarDoBanco() {
@@ -4276,11 +4288,11 @@
     }
 
     // --- CLIENTES ---
-    let clientes = LS.get('clientes') || [];
-    artigos = LS.get('artigos') || [];
-    todos = LS.get('todos') || [];
-    registrosHoras = LS.get('registros_horas') || [];
-    propostasEnviadas = LS.get('propostas_enviadas') || [];
+
+
+
+
+
 
     function salvarCliente(e) {
         e.preventDefault();
@@ -4456,10 +4468,10 @@
         inicializarDoBanco().catch(() => {});
         // Re-inicializa variáveis com dados locais primeiro
         clientes = LS.get('clientes') || [];
-        artigos = LS.get('artigos') || [];
-        todos = LS.get('todos') || [];
-        registrosHoras = LS.get('registros_horas') || [];
-        propostasEnviadas = LS.get('propostas_enviadas') || [];
+    
+    
+    
+    
         desdobramentos = LS.get('desdobramentos') || [];
         documentos = LS.get('documentos') || [];
         renderClientes();
