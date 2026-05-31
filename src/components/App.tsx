@@ -3,10 +3,17 @@
 import { useState } from 'react';
 import ClientesSection from './sections/Clientes';
 import ProjetosSection from './sections/Projetos';
+import GestaoSection from './sections/Gestao';
 import TodosSection from './sections/Todos';
+import PrecificacaoSection from './sections/Precificacao';
+import HorasSection from './sections/Horas';
+import PropostaSection from './sections/Proposta';
+import FinanceiroSection from './sections/Financeiro';
+import DocumentosSection from './sections/Documentos';
+import EstudoSection from './sections/Estudo';
 import ArtigosSection from './sections/Artigos';
 
-type Page = 'dashboard' | 'clientes' | 'projetos' | 'todos' | 'artigos';
+type Page = 'dashboard' | 'clientes' | 'projetos' | 'gestao' | 'todos' | 'precificacao' | 'horas' | 'proposta' | 'financeiro' | 'documentos' | 'estudo' | 'artigos';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('dashboard');
@@ -21,7 +28,14 @@ export default function App() {
             { id: 'dashboard', label: 'Dashboard' },
             { id: 'clientes', label: 'Clientes' },
             { id: 'projetos', label: 'Projetos' },
+            { id: 'gestao', label: 'Gestão' },
             { id: 'todos', label: 'To Do List' },
+            { id: 'precificacao', label: 'Precificação' },
+            { id: 'horas', label: 'Contadora de Horas' },
+            { id: 'proposta', label: 'Proposta Comercial' },
+            { id: 'financeiro', label: 'Financeiro' },
+            { id: 'documentos', label: 'Documentos' },
+            { id: 'estudo', label: 'Estudo' },
             { id: 'artigos', label: 'Artigos' },
           ].map((item) => (
             <button
@@ -51,7 +65,14 @@ export default function App() {
         {currentPage === 'dashboard' && <Dashboard />}
         {currentPage === 'clientes' && <ClientesSection />}
         {currentPage === 'projetos' && <ProjetosSection />}
+        {currentPage === 'gestao' && <GestaoSection />}
         {currentPage === 'todos' && <TodosSection />}
+        {currentPage === 'precificacao' && <PrecificacaoSection />}
+        {currentPage === 'horas' && <HorasSection />}
+        {currentPage === 'proposta' && <PropostaSection />}
+        {currentPage === 'financeiro' && <FinanceiroSection />}
+        {currentPage === 'documentos' && <DocumentosSection />}
+        {currentPage === 'estudo' && <EstudoSection />}
         {currentPage === 'artigos' && <ArtigosSection />}
       </main>
     </div>
