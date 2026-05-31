@@ -2142,34 +2142,33 @@
 
 <!-- ONBOARDING: SELEÇÃO DE TIPO -->
 <div id="selecionarTipoProjetoModal" class="modal">
-    <div class="modal-content" style="max-width: 480px;">
+    <div class="modal-content" style="max-width: 400px;">
         <div class="modal-header">
             <h2 class="modal-title">Novo cliente</h2>
             <button class="modal-close" onclick="closeModal('selecionarTipoProjetoModal')">×</button>
         </div>
-        <p style="font-size: 13px; color: #938d85; margin-bottom: 24px;">Selecione o tipo de projeto para iniciar o formulário de dados.</p>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <button onclick="iniciarOnboarding('iv')" style="display: flex; align-items: center; gap: 16px; padding: 20px; background: white; border: 1px solid #d3d1c7; border-radius: 10px; cursor: pointer; text-align: left; font-family: inherit; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='#1a1a1a'" onmouseleave="this.style.borderColor='#d3d1c7'">
-                <div style="width: 40px; height: 40px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-                </div>
-                <div>
-                    <div style="font-size: 14px; font-weight: 400; color: #1a1a1a; margin-bottom: 4px;">Identidade Visual</div>
-                    <div style="font-size: 12px; color: #938d85;">Branding, logo, manual de marca</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9c4bd" stroke-width="1.5" style="margin-left: auto;"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-            <button onclick="iniciarOnboarding('site')" style="display: flex; align-items: center; gap: 16px; padding: 20px; background: white; border: 1px solid #d3d1c7; border-radius: 10px; cursor: pointer; text-align: left; font-family: inherit; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='#1a1a1a'" onmouseleave="this.style.borderColor='#d3d1c7'">
-                <div style="width: 40px; height: 40px; background: #e8f5c8; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3a5a10" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-                </div>
-                <div>
-                    <div style="font-size: 14px; font-weight: 400; color: #1a1a1a; margin-bottom: 4px;">Site</div>
-                    <div style="font-size: 12px; color: #938d85;">Site institucional, landing page</div>
-                </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c9c4bd" stroke-width="1.5" style="margin-left: auto;"><path d="M9 18l6-6-6-6"/></svg>
-            </button>
-        </div>
+        <form onsubmit="salvarNovoCliente(event)">
+            <div class="form-group">
+                <label class="form-label">Nome</label>
+                <input type="text" id="nc-nome" class="form-input" placeholder="Nome do cliente" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Telefone</label>
+                <input type="tel" id="nc-telefone" class="form-input" placeholder="(11) 99999-9999">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tipo de projeto</label>
+                <select id="nc-tipo" class="form-input" required>
+                    <option value="">Selecione um tipo</option>
+                    <option value="iv">Identidade Visual</option>
+                    <option value="site">Site</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('selecionarTipoProjetoModal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -4752,6 +4751,31 @@
             }).catch(() => {});
         });
     }, 100);
+
+    // Novo fluxo simples de cliente
+    function salvarNovoCliente(e) {
+        e.preventDefault();
+        const nome = document.getElementById('nc-nome').value.trim();
+        const telefone = document.getElementById('nc-telefone').value.trim();
+        const tipo = document.getElementById('nc-tipo').value;
+        
+        if (!nome || !tipo) return alert('Preencha os campos obrigatórios');
+        
+        const cliente = {
+            id: Date.now(),
+            nome,
+            tel: telefone,
+            email: '',
+            tipo,
+            status: 'Ativo'
+        };
+        
+        clientes.push(cliente);
+        LS.set('clientes', clientes);
+        renderClientes();
+        closeModal('selecionarTipoProjetoModal');
+        document.querySelector('#selecionarTipoProjetoModal form').reset();
+    }
 </script>
 
 
