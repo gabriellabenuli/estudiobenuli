@@ -4252,29 +4252,7 @@
             }
         },
     };
-    
-    // Load from Neon when page starts (non-blocking)
-    (async () => {
-        const endpoints = {
-            'clientes': '/api/clientes',
-            'projetos': '/api/projetos',
-            'todos': '/api/todos',
-            'artigos': '/api/artigos',
-            'propostas_enviadas': '/api/propostas',
-            'registros_horas': '/api/registros-horas',
-            'documentos': '/api/documentos',
-            'desdobramentos': '/api/desdobramentos',
-        };
-        for (const [key, endpoint] of Object.entries(endpoints)) {
-            try {
-                const res = await fetch(endpoint);
-                const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    localStorage.setItem(key, JSON.stringify(data));
-                }
-            } catch (e) {}
-        }
-    })();
+
 
     // --- CLIENTES ---
     let clientes = LS.get('clientes') || [];
@@ -4753,6 +4731,27 @@
         }
     }
 
+
+    // Load from Neon when page starts (non-blocking)
+    setTimeout(() => {
+        const endpoints = {
+            'clientes': '/api/clientes',
+            'projetos': '/api/projetos',
+            'todos': '/api/todos',
+            'artigos': '/api/artigos',
+            'propostas_enviadas': '/api/propostas',
+            'registros_horas': '/api/registros-horas',
+            'documentos': '/api/documentos',
+            'desdobramentos': '/api/desdobramentos',
+        };
+        Object.entries(endpoints).forEach(([key, endpoint]) => {
+            fetch(endpoint).then(r => r.json()).then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    localStorage.setItem(key, JSON.stringify(data));
+                }
+            }).catch(() => {});
+        });
+    }, 100);
 </script>
 
 
