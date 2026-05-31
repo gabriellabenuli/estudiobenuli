@@ -4233,11 +4233,15 @@
         'configuracoes': '/api/configuracoes',
     };
 
+    // Always use API as source of truth
     const LS = {
-        get: (key) => { try { return JSON.parse(localStorage.getItem(key)) } catch { return null } },
+        get: (key) => {
+            // Try localStorage first for immediate response
+            try { return JSON.parse(localStorage.getItem(key)) } catch { return null }
+        },
         set: (key, val) => {
-            localStorage.setItem(key, JSON.stringify(val));
-            // Sync to API in background
+            // Always save to API (this is the source of truth)
+            localStorage.setItem(key, JSON.stringify(val)); // backup
             if (API_MAP[key]) {
                 const endpoint = API_MAP[key];
                 if (key === 'configuracoes') {
@@ -4253,26 +4257,32 @@
         },
     };
 
-    // Load from API on startup (background, non-blocking)
-    function loadFromDB() {
-        ['clientes', 'projetos', 'todos', 'artigos', 'propostas_enviadas', 'registros_horas', 'documentos', 'desdobramentos'].forEach(key => {
-            fetch(API_MAP[key])
-                .then(r => r.json())
-                .then(data => {
-                    if (Array.isArray(data) && data.length > 0) {
-                        localStorage.setItem(key, JSON.stringify(data));
-                    }
-                })
-                .catch(() => {});
-        });
+    // Load from API on startup - BEFORE rendering anything
+    let dbLoadComplete = false;
+    async function loadFromDB() {
+        try {
+            const promises = ['clientes', 'projetos', 'todos', 'artigos', 'propostas_enviadas', 'registros_horas', 'documentos', 'desdobramentos'].map(key =>
+                fetch(API_MAP[key])
+                    .then(r => r.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            localStorage.setItem(key, JSON.stringify(data));
+                        }
+                    })
+                    .catch(() => {})
+            );
+            await Promise.all(promises);
+        } catch (e) {}
+        dbLoadComplete = true;
     }
     
-    // Load DB on page load
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', loadFromDB);
-    } else {
-        loadFromDB();
-    }
+    // Load DB BEFORE DOMContentLoaded fires (so data is ready when page renders)
+    loadFromDB().then(() => {
+        // Trigger DOMContentLoaded handlers after data is loaded
+        if (!document.readyState === 'loading') {
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+        }
+    })
 
     // --- CLIENTES ---
     let clientes = LS.get('clientes') || [];
