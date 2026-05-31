@@ -4451,10 +4451,10 @@
     // salvarCliente is now bound via onsubmit in the form
 
     // --- INICIALIZAR DADOS SALVOS ---
-    document.addEventListener('DOMContentLoaded', async () => {
-        // Carrega dados do banco antes de renderizar
-        await inicializarDoBanco();
-        // Re-inicializa variáveis com dados do banco
+    document.addEventListener('DOMContentLoaded', () => {
+        // Carrega dados do banco em background (não bloqueia UI)
+        inicializarDoBanco().catch(() => {});
+        // Re-inicializa variáveis com dados locais primeiro
         clientes = LS.get('clientes') || [];
         artigos = LS.get('artigos') || [];
         todos = LS.get('todos') || [];
