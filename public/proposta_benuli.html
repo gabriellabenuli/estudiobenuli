@@ -844,11 +844,11 @@ if (p.get('valor')) {
   document.getElementById('invest-valor').textContent = 'R$ ' + valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }
 
-// Preencher WhatsApp
-if (p.get('whatsapp')) {
-  const wpp = p.get('whatsapp').replace(/\D/g, '');
-  document.getElementById('cta-whatsapp').href = 'https://wa.me/55' + wpp;
-}
+// Preencher WhatsApp (com default para trabalho)
+const whatsappWork = '5524998257606';
+const whatsappParam = p.get('whatsapp');
+const wppFinal = whatsappParam ? whatsappParam.replace(/\D/g, '') : whatsappWork;
+document.getElementById('cta-whatsapp').href = 'https://wa.me/' + wppFinal;
 
 // Preencher Email
 if (p.get('email')) {
