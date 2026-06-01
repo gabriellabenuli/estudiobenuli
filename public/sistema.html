@@ -3736,7 +3736,7 @@
             return;
         }
 
-        container.innerHTML = propostas.map(prop => {
+        container.innerHTML = propostas.map((prop, idx) => {
             const dataCriacao = new Date(prop.criado_em);
             const dataVencimento = new Date(dataCriacao);
             dataVencimento.setDate(dataVencimento.getDate() + 15);
@@ -3781,13 +3781,56 @@
                             <div style="font-size:11px;color:#c9c4bd;">${dataMes}</div>
                         </div>
                         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
-                            <div style="font-size:10px;color:white;background:${statusCor};padding:4px 10px;border-radius:4px;white-space:nowrap;">${statusBadge}</div>
+                            <select onchange="propAtualizarStatus('${prop.id}', this.value)" style="font-size:10px;padding:4px 8px;border:1px solid #e5e3de;border-radius:4px;cursor:pointer;background:white;color:#1a1a1a;">
+                                <option value="rascunho" ${prop.status === 'rascunho' ? 'selected' : ''}>Rascunho</option>
+                                <option value="enviada" ${prop.status === 'enviada' ? 'selected' : ''}>Enviada</option>
+                                <option value="aceita" ${prop.status === 'aceita' ? 'selected' : ''}>Aceita</option>
+                                <option value="rejeitada" ${prop.status === 'rejeitada' ? 'selected' : ''}>Rejeitada</option>
+                            </select>
                             ${diasText ? `<div style="font-size:10px;color:#938d85;">${diasText}</div>` : ''}
                         </div>
                     </div>
                 </div>
             `;
         }).join('');
+    }
+
+    function propAtualizarStatus(propostaId, novoStatus) {
+        propostas = LS.get('propostas') || [];
+        const proposta = propostas.find(p => p.id === propostaId);
+        if (!proposta) return;
+
+        const statusAnterior = proposta.status;
+        proposta.status = novoStatus;
+
+        // Atualizar timestamps
+        if (novoStatus === 'enviada' && statusAnterior === 'rascunho') {
+            proposta.enviado_em = new Date().toISOString();
+        } else if (novoStatus === 'aceita' && statusAnterior !== 'aceita') {
+            proposta.aceito_em = new Date().toISOString();
+        }
+
+        LS.set('propostas', propostas);
+        propRenderAcompanhamento();
+
+        // Atualizar leads também (para mostrar status nos cards)
+        if (proposta.leadId) {
+            renderLeads();
+        }
+
+        // Notificação
+        const toast = document.getElementById('toast');
+        if (toast) {
+            const textoStatus = {
+                'rascunho': 'Rascunho',
+                'enviada': 'Enviada',
+                'aceita': 'Aceita',
+                'rejeitada': 'Rejeitada'
+            };
+            toast.textContent = `Status atualizado para "${textoStatus[novoStatus]}" ✓`;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
     }
 
     function propAbrir() { if (propLinkAtual) window.open(propLinkAtual, '_blank'); }
