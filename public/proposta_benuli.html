@@ -675,7 +675,7 @@ if (p.get('data')) {
 // Preencher tipo de projeto (identidade visual ou site)
 if (p.get('tipo')) {
   const tipo = p.get('tipo');
-  const isSite = tipo === 'site' || tipo.includes('site');
+  const isSite = tipo === 'site';
 
   // Atualizar título do hero baseado no tipo
   const heroTitle = document.querySelector('.hero-title');
