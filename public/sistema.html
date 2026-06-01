@@ -3643,6 +3643,30 @@
         propostasEnviadas.unshift(registro);
         if (propostasEnviadas.length > 20) propostasEnviadas = propostasEnviadas.slice(0, 20);
         LS.set('propostas_enviadas', propostasEnviadas);
+
+        // Também salvar em propostas (novo schema) se veio de um lead
+        if (window.leadAtualParaProposta && window.leadAtualParaProposta.leadId) {
+            propostas = LS.get('propostas') || [];
+            const novaProposta = {
+                id: gerarUUID(),
+                leadId: window.leadAtualParaProposta.leadId,
+                clienteNome: window.leadAtualParaProposta.nome,
+                clienteEmail: window.leadAtualParaProposta.email,
+                clienteWhatsapp: window.leadAtualParaProposta.whatsapp,
+                tipo: propTipo,
+                valor: parseInt(valor.replace(/\D/g, '')) || valor,
+                prazo: 30,
+                escopo: '',
+                observacoes: '',
+                status: 'enviada',
+                criado_em: new Date().toISOString(),
+                enviado_em: new Date().toISOString(),
+                aceito_em: null
+            };
+            propostas.push(novaProposta);
+            LS.set('propostas', propostas);
+        }
+
         propRenderHistorico();
 
         const toast = document.getElementById('toast');
