@@ -4373,7 +4373,8 @@
                         <div style="font-size:12px;color:#938d85;">${lead.whatsapp}</div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:flex-start;">
-                        <button onclick="event.stopPropagation();abrirPropostaDoLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#D4AA88;padding:6px;font-size:12px;font-weight:500;font-family:inherit;">Proposta</button>
+                        <button onclick="event.stopPropagation();abrirPropostasDoLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#D4AA88;padding:6px;font-size:12px;font-weight:500;font-family:inherit;">Propostas</button>
+                        <button onclick="event.stopPropagation();abrirPrecificacaoDoLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#D4AA88;padding:6px;font-size:12px;font-weight:500;font-family:inherit;">+ Nova</button>
                         <button onclick="event.stopPropagation();deletarLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#938d85;padding:6px;">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
                         </button>
@@ -4418,8 +4419,103 @@
         window.scrollTo(0, 0);
     }
 
-    function abrirPropostaDoLead(leadId) {
-        abrirPrecificacaoDoLead(leadId);
+    function abrirPropostasDoLead(leadId) {
+        const lead = leads.find(l => l.id === leadId);
+        if (!lead) return;
+
+        propostas = LS.get('propostas') || [];
+        const propostasDoLead = propostas.filter(p => p.leadId === leadId);
+
+        let html = `
+            <div style="padding:20px;">
+                <h2 style="margin-bottom:20px;">Propostas de ${lead.nome}</h2>
+        `;
+
+        if (propostasDoLead.length === 0) {
+            html += '<p style="color:#938d85;">Nenhuma proposta cadastrada para este lead.</p>';
+        } else {
+            html += '<div style="display:flex;flex-direction:column;gap:16px;">';
+            propostasDoLead.forEach(prop => {
+                const statusColors = {
+                    'rascunho': '#938d85',
+                    'enviada': '#D4AA88',
+                    'aceita': '#789273',
+                    'rejeitada': '#c9c4bd'
+                };
+                const statusText = {
+                    'rascunho': 'Rascunho',
+                    'enviada': 'Enviada',
+                    'aceita': 'Aceita',
+                    'rejeitada': 'Rejeitada'
+                };
+
+                html += `
+                    <div style="border:1px solid #e5e3de;border-radius:8px;padding:16px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                            <div>
+                                <div style="font-weight:500;color:#1a1a1a;margin-bottom:4px;">${prop.tipo === 'site' ? 'Website' : 'Identidade Visual'}</div>
+                                <div style="font-size:13px;color:#938d85;">R$ ${prop.valor.toLocaleString('pt-BR')}</div>
+                            </div>
+                            <div style="font-size:12px;padding:6px 12px;border-radius:6px;background:${statusColors[prop.status]};color:white;">${statusText[prop.status]}</div>
+                        </div>
+                        <div style="display:flex;gap:8px;margin-top:12px;">
+                `;
+
+                if (prop.status === 'aceita') {
+                    html += `<button onclick="converterPropostaEmProjetoUI('${prop.id}')" style="flex:1;padding:8px 12px;background:#789273;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit;">Converter em Projeto</button>`;
+                } else if (prop.status === 'rascunho') {
+                    html += `<button onclick="editarProposta('${prop.id}')" style="flex:1;padding:8px 12px;background:#D4AA88;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500;font-family:inherit;">Editar</button>`;
+                }
+
+                html += `</div></div>`;
+            });
+            html += '</div>';
+        }
+
+        html += '</div>';
+
+        // Criar modal
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:1000;';
+        modal.innerHTML = `
+            <div style="background:white;border-radius:12px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto;">
+                ${html}
+                <div style="padding:20px;border-top:1px solid #e5e3de;display:flex;justify-content:flex-end;gap:8px;">
+                    <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 16px;background:#e5e3de;border:none;border-radius:6px;cursor:pointer;font-family:inherit;">Fechar</button>
+                </div>
+            </div>
+        `;
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.remove();
+        };
+        document.body.appendChild(modal);
+    }
+
+    function converterPropostaEmProjetoUI(propostaId) {
+        if (!confirm('Confirmar conversão da proposta em projeto?')) return;
+
+        try {
+            const novoProjeto = converterPropostaEmProjeto(propostaId);
+
+            // Atualizar localStorage
+            projetos = LS.get('projetos') || [];
+            LS.set('projetos', projetos);
+
+            // Fechar modal e atualizar
+            document.querySelector('[style*="fixed"]')?.remove();
+            renderLeads();
+            renderProjetos();
+
+            // Mostrar notificação
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.textContent = 'Projeto criado com sucesso! ✓';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            }
+        } catch (e) {
+            alert('Erro: ' + e.message);
+        }
     }
 
     function salvarCliente(e) {
