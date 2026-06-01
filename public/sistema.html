@@ -105,6 +105,7 @@
         <div class="logo" id="sidebar-logo">Estúdio Benuli</div>
         <div class="nav-section">
             <div class="nav-item active" onclick="showPage('dashboard', this)">Dashboard</div>
+            <div class="nav-item" onclick="showPage('leads', this)">Leads</div>
             <div class="nav-item" onclick="showPage('clientes', this)">Clientes</div>
             <div class="nav-item" onclick="showPage('projetos', this)">Projetos</div>
         </div>
@@ -215,6 +216,15 @@
                     <div class="empty-state" style="grid-column:1/-1;">Nenhum projeto ativo.</div>
                 </div>
             </div>
+        </div>
+
+        <!-- LEADS (NOVO) -->
+        <div id="leads" class="page">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+                <h1 class="page-title" style="margin-bottom: 0;">Leads</h1>
+                <button class="btn btn-primary" style="width: 40px; height: 40px; padding: 0; font-size: 20px; border-radius: 8px;" onclick="openModal('novoLeadModal')">+</button>
+            </div>
+            <div id="leads-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;"><div class="empty-state">Nenhum lead cadastrado.</div></div>
         </div>
 
         <!-- CLIENTES -->
@@ -2542,6 +2552,22 @@
 </div>
 
 <!-- MODAL NOVO CLIENTE -->
+<!-- NOVO LEAD (NOVO) -->
+<div id="novoLeadModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2 class="modal-title">Novo Lead</h2><button class="modal-close" onclick="closeModal('novoLeadModal')">×</button></div>
+        <form onsubmit="salvarLead(event)">
+            <div class="form-group"><label class="form-label">Nome *</label><input type="text" id="lead-nome" class="form-input" required=""></div>
+            <div class="form-group"><label class="form-label">E-mail *</label><input type="email" id="lead-email" class="form-input" required=""></div>
+            <div class="form-group"><label class="form-label">WhatsApp *</label><input type="text" id="lead-whatsapp" class="form-input" placeholder="5524999999999" required=""></div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('novoLeadModal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar Lead</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div id="novoClienteModal" class="modal">
     <div class="modal-content">
         <div class="modal-header"><h2 class="modal-title">Novo Cliente</h2><button class="modal-close" onclick="closeModal('novoClienteModal')">×</button></div>
@@ -4275,6 +4301,85 @@
     // Agora que LS existe, podemos inicializar corretamente
     propostasEnviadas = LS.get('propostas_enviadas') || [];
 
+    // =============================================
+    // LEADS (NOVO)
+    // =============================================
+
+    function salvarLead(e) {
+        e.preventDefault();
+        const nome = document.getElementById('lead-nome').value.trim();
+        const email = document.getElementById('lead-email').value.trim();
+        const whatsapp = document.getElementById('lead-whatsapp').value.trim();
+
+        if (!nome || !email || !whatsapp) {
+            alert('Preencha todos os campos obrigatórios');
+            return;
+        }
+
+        const novoLead = criarLead(nome, email, whatsapp);
+        LS.set('leads', leads);
+        renderLeads();
+        closeModal('novoLeadModal');
+        document.querySelector('#novoLeadModal form').reset();
+    }
+
+    function renderLeads() {
+        const grid = document.getElementById('leads-grid');
+        if (!grid) return;
+
+        leads = LS.get('leads') || [];
+        grid.innerHTML = '';
+
+        if (leads.length === 0) {
+            grid.innerHTML = '<div class="empty-state">Nenhum lead cadastrado.</div>';
+            return;
+        }
+
+        leads.forEach(lead => {
+            const div = document.createElement('div');
+            div.style.cssText = 'background:white;border-radius:12px;border:1px solid #e5e3de;padding:20px;cursor:pointer;transition:border-color 0.2s;';
+            div.onmouseenter = () => div.style.borderColor = '#c9c4bd';
+            div.onmouseleave = () => div.style.borderColor = '#e5e3de';
+
+            const dataCriacao = new Date(lead.criado_em).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+
+            div.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                    <div style="flex:1;">
+                        <div style="font-size:16px;font-weight:500;color:#1a1a1a;margin-bottom:4px;">${lead.nome}</div>
+                        <div style="font-size:12px;color:#938d85;margin-bottom:8px;">${lead.email}</div>
+                        <div style="font-size:12px;color:#938d85;">${lead.whatsapp}</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:flex-start;">
+                        <button onclick="event.stopPropagation();abrirPropostaDoLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#D4AA88;padding:6px;font-size:12px;font-weight:500;font-family:inherit;">Proposta</button>
+                        <button onclick="event.stopPropagation();deletarLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#938d85;padding:6px;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div style="font-size:11px;color:#c9c4bd;text-align:right;">${dataCriacao}</div>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    function deletarLead(id) {
+        if (!confirm('Deletar este lead?')) return;
+        leads = leads.filter(l => l.id !== id);
+        LS.set('leads', leads);
+        renderLeads();
+    }
+
+    function abrirPropostaDoLead(leadId) {
+        // Encontrar o lead
+        const lead = leads.find(l => l.id === leadId);
+        if (!lead) return;
+
+        // TODO: Abrir formulário de proposta pré-preenchido com dados do lead
+        // Por enquanto, just show alert
+        alert(`Criar proposta para ${lead.nome}\n\nEssa funcionalidade será implementada na Fase 3`);
+    }
+
     function salvarCliente(e) {
         e.preventDefault();
         const form = e.target;
@@ -4445,6 +4550,7 @@
 
     // --- INICIALIZAR DADOS SALVOS ---
     document.addEventListener('DOMContentLoaded', () => {
+        renderLeads(); // NOVO
         renderClientes();
         renderizarArtigos();
         renderDocumentos();
