@@ -4350,6 +4350,7 @@
         if (!grid) return;
 
         leads = LS.get('leads') || [];
+        propostas = LS.get('propostas') || [];
         grid.innerHTML = '';
 
         if (leads.length === 0) {
@@ -4365,18 +4366,54 @@
 
             const dataCriacao = new Date(lead.criado_em).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
 
+            // Buscar propostas deste lead
+            const propostasDoLead = propostas.filter(p => p.leadId === lead.id);
+            const propostaAceita = propostasDoLead.find(p => p.status === 'aceita');
+            const propostaRecusada = propostasDoLead.find(p => p.status === 'rejeitada');
+            const propostaEnviada = propostasDoLead.find(p => p.status === 'enviada');
+
+            // Calcular dias até vencimento
+            let diasVencimento = '';
+            if (propostaEnviada && propostaEnviada.criado_em) {
+                const dataEnvio = new Date(propostaEnviada.criado_em);
+                const dataVencimento = new Date(dataEnvio);
+                dataVencimento.setDate(dataVencimento.getDate() + 15);
+                const hoje = new Date();
+                const diasRestantes = Math.ceil((dataVencimento - hoje) / (1000 * 60 * 60 * 24));
+                if (diasRestantes > 0) {
+                    diasVencimento = `Vence em ${diasRestantes}d`;
+                } else if (diasRestantes === 0) {
+                    diasVencimento = 'Vence hoje';
+                } else {
+                    diasVencimento = 'Vencida';
+                }
+            }
+
+            // HTML com infos do lead
+            let statusHTML = '';
+            if (propostaAceita) {
+                statusHTML = '<div style="font-size:10px;color:white;background:#789273;padding:3px 8px;border-radius:4px;display:inline-block;margin-right:6px;">✓ Aceita</div>';
+            } else if (propostaRecusada) {
+                statusHTML = '<div style="font-size:10px;color:white;background:#c9c4bd;padding:3px 8px;border-radius:4px;display:inline-block;margin-right:6px;">✗ Recusada</div>';
+            } else if (propostaEnviada) {
+                statusHTML = `<div style="font-size:10px;color:white;background:#D4AA88;padding:3px 8px;border-radius:4px;display:inline-block;margin-right:6px;">⏳ Aguardando</div>`;
+            }
+
+            const vencimentoHTML = diasVencimento ? `<div style="font-size:10px;color:#938d85;display:inline-block;">${diasVencimento}</div>` : '';
+
             div.innerHTML = `
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
                     <div style="flex:1;">
                         <div style="font-size:16px;font-weight:500;color:#1a1a1a;margin-bottom:4px;">${lead.nome}</div>
                         <div style="font-size:12px;color:#938d85;margin-bottom:8px;">${lead.email}</div>
-                        <div style="font-size:12px;color:#938d85;">${lead.whatsapp}</div>
+                        <div style="font-size:12px;color:#938d85;margin-bottom:8px;">${lead.whatsapp}</div>
+                        <div style="display:flex;gap:6px;align-items:center;">${statusHTML}${vencimentoHTML}</div>
                     </div>
                     <div style="display:flex;gap:8px;align-items:flex-start;">
                         <button onclick="event.stopPropagation();abrirPropostasDoLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#D4AA88;padding:6px;font-size:12px;font-weight:500;font-family:inherit;">Propostas</button>
                         <button onclick="event.stopPropagation();abrirPrecificacaoDoLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#D4AA88;padding:6px;font-size:12px;font-weight:500;font-family:inherit;">+ Nova</button>
                         <button onclick="event.stopPropagation();deletarLead('${lead.id}')" style="background:none;border:none;cursor:pointer;color:#938d85;padding:6px;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011-1v2"/></svg>
                         </button>
                     </div>
                 </div>
