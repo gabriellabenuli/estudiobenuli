@@ -4231,6 +4231,9 @@
                 'todos': '/api/todos',
                 'artigos': '/api/artigos',
                 'propostas_enviadas': '/api/propostas',
+                'propostas': '/api/propostas', // novo: propostas refatoradas
+                'leads': '/api/leads', // novo
+                'onboarding': '/api/onboarding', // novo
                 'registros_horas': '/api/registros-horas',
                 'documentos': '/api/documentos',
                 'desdobramentos': '/api/desdobramentos',
@@ -4252,12 +4255,23 @@
         },
     };
 
+    // RODAR MIGRAÇÃO DE SCHEMA (agora que LS está definido)
+    if (typeof initLSSchema === 'function') {
+        initLSSchema();
+    }
 
     // --- CLIENTES ---
     let clientes = LS.get('clientes') || [];
     artigos = LS.get('artigos') || [];
     todos = LS.get('todos') || [];
     registrosHoras = LS.get('registros_horas') || [];
+
+    // --- NOVO: LEADS, PROPOSTAS, ONBOARDING ---
+    let leads = LS.get('leads') || [];
+    let propostas = LS.get('propostas') || [];
+    let onboarding = LS.get('onboarding') || [];
+
+    // Retrocompat: propostas_enviadas ainda pode existir (será sincronizado com propostas)
     propostasEnviadas = LS.get('propostas_enviadas') || [];
 
     function salvarCliente(e) {
@@ -4778,5 +4792,7 @@
     }
 </script>
 
+<!-- SCHEMA MIGRATION para novo fluxo Lead → Proposta → Projeto -->
+<script src="./schema-migration.js"></script>
 
 </body></html>
