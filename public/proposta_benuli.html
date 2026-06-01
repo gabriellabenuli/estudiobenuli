@@ -706,19 +706,17 @@ function renderItensIncluidos(tipo, itensCustom = null, desdobramentosCustom = n
     }
   }
 
-  // Renderizar itens base
+  // Renderizar itens base (sem mostrar valores)
   let html = itens.map(item => {
     const nome = typeof item === 'string' ? item : item.nome;
-    const valor = typeof item === 'object' && item.valor ? ` · R$ ${item.valor.toLocaleString('pt-BR')}` : '';
-    return `<li>${nome}${valor}</li>`;
+    return `<li>${nome}</li>`;
   }).join('');
 
-  // Adicionar desdobramentos (itens adicionais) à lista
+  // Adicionar desdobramentos (itens adicionais) à lista (sem mostrar valores)
   if (desdobramentosCustom && desdobramentosCustom.length > 0) {
     html += desdobramentosCustom.map(desc => {
       const nome = typeof desc === 'string' ? desc : desc.nome;
-      const valor = typeof desc === 'object' && desc.valor ? ` · R$ ${desc.valor.toLocaleString('pt-BR')}` : '';
-      return `<li>${nome}${valor}</li>`;
+      return `<li>${nome}</li>`;
     }).join('');
   }
 
