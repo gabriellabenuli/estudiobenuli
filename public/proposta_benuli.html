@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proposta Comercial - Estúdio Benuli</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #faf9f7;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        header {
+            margin-bottom: 60px;
+            border-bottom: 2px solid #faf9f7;
+            padding-bottom: 40px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 40px;
+        }
+        h1 {
+            font-size: 32px;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #938d85;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #938d85;
+            margin-bottom: 16px;
+        }
+        .section-content {
+            font-size: 14px;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        .section-content p {
+            margin-bottom: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+        th {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 2px solid #e5e3de;
+            font-weight: 600;
+            font-size: 12px;
+            color: #1a1a1a;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e3de;
+            font-size: 13px;
+            color: #1a1a1a;
+        }
+        .value {
+            text-align: right;
+            color: #789273;
+        }
+        .total-section {
+            background: #faf9f7;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e3de;
+        }
+        .total-row.final {
+            border: none;
+            padding: 16px 0;
+            font-weight: 600;
+            font-size: 18px;
+            color: #1a1a1a;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 40px;
+            border-top: 2px solid #e5e3de;
+            font-size: 12px;
+            color: #938d85;
+        }
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary {
+            background: #1a1a1a;
+            color: white;
+        }
+        .btn-secondary {
+            background: white;
+            border: 1px solid #e5e3de;
+            color: #1a1a1a;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; }
+            .actions { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">Estúdio Benuli</div>
+            <h1>Proposta Comercial</h1>
+            <p class="subtitle" id="data-proposta"></p>
+        </header>
+
+        <div class="grid-2">
+            <div>
+                <div class="section">
+                    <div class="section-title">Cliente</div>
+                    <div class="section-content" id="cliente-info"></div>
+                </div>
+            </div>
+            <div>
+                <div class="section">
+                    <div class="section-title">Serviço</div>
+                    <div class="section-content" id="servico-info"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Escopo</div>
+            <table id="escopo-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th class="value">Valor</th>
+                    </tr>
+                </thead>
+                <tbody id="escopo-body"></tbody>
+            </table>
+        </div>
+
+        <div class="total-section">
+            <div class="total-row">
+                <span>Subtotal</span>
+                <span id="subtotal" class="value">R$ 0,00</span>
+            </div>
+            <div class="total-row">
+                <span>Imposto estimado (6%)</span>
+                <span id="imposto" class="value">R$ 0,00</span>
+            </div>
+            <div class="total-row final">
+                <span>Total</span>
+                <span id="total" class="value">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">Validade e Condições</div>
+            <div class="section-content">
+                <p>Esta proposta é válida por 7 dias a partir da data acima.</p>
+                <p>Para aceitar, responda este e-mail ou entre em contato conosco.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Estúdio Benuli</strong> | www.estudiobenuli.com | estudio@gabriellabenuli.com</p>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn-secondary" onclick="window.print()">Imprimir / PDF</button>
+        <button class="btn-secondary" onclick="copiarLink()">Copiar Link</button>
+    </div>
+
+    <script>
+        // Pegar parâmetros da URL
+        const params = new URLSearchParams(window.location.search);
+        const cliente = params.get('cliente') || 'Cliente';
+        const tipo = params.get('tipo') || 'idv';
+        const email = params.get('email') || '';
+        const whatsapp = params.get('whatsapp') || '';
+        const valor = parseFloat(params.get('valor')) || 0;
+        const itens = params.get('itens') ? JSON.parse(decodeURIComponent(params.get('itens'))) : [];
+
+        // Renderizar proposta
+        document.getElementById('data-proposta').textContent = new Date().toLocaleDateString('pt-BR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+
+        document.getElementById('cliente-info').innerHTML = `
+            <p><strong>${cliente}</strong></p>
+            ${email ? `<p>${email}</p>` : ''}
+            ${whatsapp ? `<p>${whatsapp}</p>` : ''}
+        `;
+
+        const tipoLabel = tipo === 'site' ? 'Desenvolvimento de Site' : 'Identidade Visual';
+        document.getElementById('servico-info').innerHTML = `<p><strong>${tipoLabel}</strong></p>`;
+
+        // Renderizar itens
+        const escopoBody = document.getElementById('escopo-body');
+        if (itens && itens.length > 0) {
+            itens.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.nome || item}</td>
+                    <td class="value">${item.valor ? 'R$ ' + parseFloat(item.valor).toLocaleString('pt-BR', {minimumFractionDigits:2}) : '—'}</td>
+                `;
+                escopoBody.appendChild(row);
+            });
+        } else {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="2">Itens da proposta definidos na negociação</td>`;
+            escopoBody.appendChild(row);
+        }
+
+        // Calcular totais
+        const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+        const subtotal = valor || 0;
+        const imposto = subtotal * 0.06;
+        const total = subtotal + imposto;
+
+        document.getElementById('subtotal').textContent = fmt(subtotal);
+        document.getElementById('imposto').textContent = fmt(imposto);
+        document.getElementById('total').textContent = fmt(total);
+
+        function copiarLink() {
+            navigator.clipboard.writeText(window.location.href);
+            alert('Link copiado para a área de transferência!');
+        }
+    </script>
+</body>
+</html>
