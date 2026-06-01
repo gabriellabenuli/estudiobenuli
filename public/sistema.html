@@ -3389,7 +3389,7 @@
     let propItens = [];
     let propDesdobramentos = [];
     let propLinkAtual = '';
-    let propostasEnviadas = LS.get('propostas_enviadas') || [];
+    let propostasEnviadas = []; // Será inicializado depois quando LS estiver pronto
 
     const SUGESTOES_IDV = [
       'Briefing e imersão de marca','Estratégia e posicionamento',
@@ -4272,6 +4272,7 @@
     let onboarding = LS.get('onboarding') || [];
 
     // Retrocompat: propostas_enviadas ainda pode existir (será sincronizado com propostas)
+    // Agora que LS existe, podemos inicializar corretamente
     propostasEnviadas = LS.get('propostas_enviadas') || [];
 
     function salvarCliente(e) {
