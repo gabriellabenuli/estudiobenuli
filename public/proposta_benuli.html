@@ -669,7 +669,7 @@ function renderEtapas(tipo) {
 }
 
 // RENDERIZAR ITENS INCLUÍDOS
-function renderItensIncluidos(tipo, itensCustom = null) {
+function renderItensIncluidos(tipo, itensCustom = null, desdobramentosCustom = null) {
   const container = document.getElementById('itens-incluidos');
   if (!container) return;
 
@@ -706,12 +706,23 @@ function renderItensIncluidos(tipo, itensCustom = null) {
     }
   }
 
-  container.innerHTML = itens.map(item => {
-    // Se for um objeto com nome e valor, renderizar com valor
+  // Renderizar itens base
+  let html = itens.map(item => {
     const nome = typeof item === 'string' ? item : item.nome;
     const valor = typeof item === 'object' && item.valor ? ` · R$ ${item.valor.toLocaleString('pt-BR')}` : '';
     return `<li>${nome}${valor}</li>`;
   }).join('');
+
+  // Adicionar desdobramentos (itens adicionais) à lista
+  if (desdobramentosCustom && desdobramentosCustom.length > 0) {
+    html += desdobramentosCustom.map(desc => {
+      const nome = typeof desc === 'string' ? desc : desc.nome;
+      const valor = typeof desc === 'object' && desc.valor ? ` · R$ ${desc.valor.toLocaleString('pt-BR')}` : '';
+      return `<li>${nome}${valor}</li>`;
+    }).join('');
+  }
+
+  container.innerHTML = html;
 }
 
 function scrollToAndOpen(id) {
@@ -778,17 +789,28 @@ if (tipoProposicao) {
   // Renderizar etapas dinamicamente
   renderEtapas(tipo);
 
-  // Renderizar itens incluídos (se fornecidos)
+  // Parsear itens e desdobramentos
+  let itensCustom = null;
+  let desdobramentosCustom = null;
+
   if (p.get('itens')) {
     try {
-      const itensCustom = JSON.parse(p.get('itens'));
-      renderItensIncluidos(tipo, itensCustom);
+      itensCustom = JSON.parse(p.get('itens'));
     } catch (e) {
-      renderItensIncluidos(tipo); // Fallback para defaults
+      console.warn('Erro ao parsear itens:', e);
     }
-  } else {
-    renderItensIncluidos(tipo); // Usar defaults
   }
+
+  if (p.get('desdobr')) {
+    try {
+      desdobramentosCustom = JSON.parse(p.get('desdobr'));
+    } catch (e) {
+      console.warn('Erro ao parsear desdobramentos:', e);
+    }
+  }
+
+  // Renderizar itens incluídos (com desdobramentos integrados)
+  renderItensIncluidos(tipo, itensCustom, desdobramentosCustom);
 
   // Atualizar título do hero baseado no tipo
   const heroTitle = document.querySelector('.hero-title');
@@ -851,31 +873,6 @@ if (p.get('validade')) {
 }
 
 
-// Preencher desdobramentos (itens adicionais)
-if (p.get('desdobr')) {
-  try {
-    const desdobramentos = JSON.parse(p.get('desdobr'));
-    if (desdobramentos.length > 0) {
-      // Adicionar seção de desdobramentos após investimento
-      const investBlock = document.querySelector('.invest-block');
-      if (investBlock && !document.getElementById('desdobr-section')) {
-        const desroDiv = document.createElement('div');
-        desroDiv.id = 'desdobr-section';
-        desroDiv.style.cssText = 'margin-top:56px;padding-top:40px;border-top:1px solid var(--line);';
-        desroDiv.innerHTML = `
-          <div class="sec-eye">Desdobramentos</div>
-          <p style="font-size:14px;color:var(--soft);margin-bottom:32px;">Estes são os itens adicionais incluídos em sua proposta:</p>
-          <ul class="iv-lista">
-            ${desdobramentos.map(d => `<li>${d.nome || d} · ${d.valor ? 'R$ ' + d.valor.toLocaleString('pt-BR') : ''}</li>`).join('')}
-          </ul>
-        `;
-        investBlock.parentElement.parentElement.appendChild(desroDiv);
-      }
-    }
-  } catch (e) {
-    console.warn('Erro ao parsear desdobramentos:', e);
-  }
-}
 </script>
 </body>
 </html>
