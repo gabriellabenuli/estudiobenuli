@@ -4317,7 +4317,8 @@
         }
 
         const novoLead = criarLead(nome, email, whatsapp);
-        LS.set('leads', leads);
+        // Atualizar variável local com dados do localStorage
+        leads = LS.get('leads') || [];
         renderLeads();
         closeModal('novoLeadModal');
         document.querySelector('#novoLeadModal form').reset();
