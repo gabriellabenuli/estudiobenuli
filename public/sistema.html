@@ -4501,7 +4501,10 @@
     }
 
     // --- DESDOBRAMENTOS ---
-    desdobramentos = LS.get('desdobramentos') || [];
+    desdobramentos = (LS.get('desdobramentos') || []).map(d => ({
+        ...d,
+        valor: typeof d.valor === 'string' ? parseFloat(d.valor) : d.valor
+    }));
 
     function adicionarDesdobramento() {
         const nome = document.getElementById('desdobr-nome').value.trim();
