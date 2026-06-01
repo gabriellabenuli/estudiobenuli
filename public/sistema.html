@@ -756,6 +756,14 @@
                 </div>
             </div>
 
+            <!-- ABAS -->
+            <div style="display:flex; gap:2px; margin-bottom:24px; border-bottom:1px solid #e5e3de;">
+                <button id="prop-tab-gerar" onclick="mostrarAbaProposta('gerar')" style="padding:12px 20px; border:none; background:none; cursor:pointer; font-size:13px; color:#938d85; border-bottom:2px solid transparent; transition:all 0.2s;">+ Gerar Proposta</button>
+                <button id="prop-tab-acompanhamento" onclick="mostrarAbaProposta('acompanhamento')" style="padding:12px 20px; border:none; background:none; cursor:pointer; font-size:13px; color:#938d85; border-bottom:2px solid transparent; transition:all 0.2s;">Acompanhamento</button>
+            </div>
+
+            <!-- CONTEÚDO DAS ABAS -->
+            <div id="prop-aba-gerar" style="display:block;">
             <div style="display:grid; grid-template-columns:1fr 380px; gap:24px; align-items:start;">
 
                 <!-- COLUNA ESQUERDA: FORMULÁRIO -->
@@ -968,6 +976,17 @@
                         <div id="prop-historico"><div class="empty-state">Nenhuma enviada ainda.</div></div>
                     </div>
 
+                </div>
+            </div>
+            </div>
+
+            <!-- ABA ACOMPANHAMENTO -->
+            <div id="prop-aba-acompanhamento" style="display:none;">
+                <div style="background:white; border:1px solid #e5e3de; border-radius:10px; padding:24px;">
+                    <div style="font-size:10px; text-transform:uppercase; color:#c9c4bd; letter-spacing:0.5px; margin-bottom:20px;">Propostas Enviadas</div>
+                    <div id="prop-acompanhamento-lista" style="display:flex; flex-direction:column; gap:12px;">
+                        <div class="empty-state">Nenhuma proposta enviada ainda.</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -3668,6 +3687,7 @@
         }
 
         propRenderHistorico();
+        propRenderAcompanhamento();
 
         const toast = document.getElementById('toast');
         if (toast) { toast.textContent = 'Link gerado ✓'; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2000); }
@@ -3680,6 +3700,94 @@
             btn.textContent = '✓ Copiado!';
             setTimeout(() => btn.textContent = 'Copiar link', 2000);
         });
+    }
+
+    function mostrarAbaProposta(aba) {
+        const abaGerar = document.getElementById('prop-aba-gerar');
+        const abaAcompanhamento = document.getElementById('prop-aba-acompanhamento');
+        const btnGerar = document.getElementById('prop-tab-gerar');
+        const btnAcompanhamento = document.getElementById('prop-tab-acompanhamento');
+
+        if (aba === 'gerar') {
+            abaGerar.style.display = 'block';
+            abaAcompanhamento.style.display = 'none';
+            btnGerar.style.borderBottomColor = '#1a1a1a';
+            btnGerar.style.color = '#1a1a1a';
+            btnAcompanhamento.style.borderBottomColor = 'transparent';
+            btnAcompanhamento.style.color = '#938d85';
+        } else {
+            abaGerar.style.display = 'none';
+            abaAcompanhamento.style.display = 'block';
+            btnGerar.style.borderBottomColor = 'transparent';
+            btnGerar.style.color = '#938d85';
+            btnAcompanhamento.style.borderBottomColor = '#1a1a1a';
+            btnAcompanhamento.style.color = '#1a1a1a';
+            propRenderAcompanhamento();
+        }
+    }
+
+    function propRenderAcompanhamento() {
+        const container = document.getElementById('prop-acompanhamento-lista');
+        if (!container) return;
+
+        propostas = LS.get('propostas') || [];
+        if (propostas.length === 0) {
+            container.innerHTML = '<div class="empty-state">Nenhuma proposta enviada ainda.</div>';
+            return;
+        }
+
+        container.innerHTML = propostas.map(prop => {
+            const dataCriacao = new Date(prop.criado_em);
+            const dataVencimento = new Date(dataCriacao);
+            dataVencimento.setDate(dataVencimento.getDate() + 15);
+            const hoje = new Date();
+            const diasRestantes = Math.ceil((dataVencimento - hoje) / (1000 * 60 * 60 * 24));
+
+            let statusBadge = '';
+            let statusCor = '';
+            if (prop.status === 'aceita') {
+                statusBadge = '✓ Aceita';
+                statusCor = '#789273';
+            } else if (prop.status === 'rejeitada') {
+                statusBadge = '✗ Rejeitada';
+                statusCor = '#c9c4bd';
+            } else if (prop.status === 'enviada') {
+                statusBadge = '⏳ Aguardando';
+                statusCor = '#D4AA88';
+            } else {
+                statusBadge = 'Rascunho';
+                statusCor = '#938d85';
+            }
+
+            let diasText = '';
+            if (prop.status === 'enviada') {
+                if (diasRestantes > 0) {
+                    diasText = `Vence em ${diasRestantes}d`;
+                } else if (diasRestantes === 0) {
+                    diasText = 'Vence hoje';
+                } else {
+                    diasText = 'Vencida';
+                }
+            }
+
+            const dataMes = dataCriacao.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+
+            return `
+                <div style="border:1px solid #e5e3de;border-radius:8px;padding:16px;background:#fafaf9;">
+                    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px;">
+                        <div style="flex:1;">
+                            <div style="font-weight:500;color:#1a1a1a;margin-bottom:4px;">${prop.clienteNome}</div>
+                            <div style="font-size:12px;color:#938d85;margin-bottom:4px;">${prop.tipo === 'site' ? 'Website' : 'Identidade Visual'} · R$ ${prop.valor.toLocaleString('pt-BR')}</div>
+                            <div style="font-size:11px;color:#c9c4bd;">${dataMes}</div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+                            <div style="font-size:10px;color:white;background:${statusCor};padding:4px 10px;border-radius:4px;white-space:nowrap;">${statusBadge}</div>
+                            ${diasText ? `<div style="font-size:10px;color:#938d85;">${diasText}</div>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     function propAbrir() { if (propLinkAtual) window.open(propLinkAtual, '_blank'); }
