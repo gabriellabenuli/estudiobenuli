@@ -4311,26 +4311,18 @@
         const email = document.getElementById('lead-email').value.trim();
         const whatsapp = document.getElementById('lead-whatsapp').value.trim();
 
-        console.log('salvarLead chamado:', { nome, email, whatsapp });
-
         if (!nome || !email || !whatsapp) {
             alert('Preencha todos os campos obrigatórios');
             return;
         }
 
         try {
-            console.log('Chamando criarLead...');
             const novoLead = criarLead(nome, email, whatsapp);
-            console.log('Lead criado:', novoLead);
-
             // Atualizar variável local com dados do localStorage
             leads = LS.get('leads') || [];
-            console.log('Leads após atualizar:', leads);
-
             renderLeads();
             closeModal('novoLeadModal');
             document.querySelector('#novoLeadModal form').reset();
-            alert('Lead salvo com sucesso!');
         } catch (err) {
             console.error('ERRO ao salvar lead:', err);
             alert('Erro ao salvar lead: ' + err.message);
