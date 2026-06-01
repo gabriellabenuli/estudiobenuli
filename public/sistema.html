@@ -3089,6 +3089,23 @@
 
         propReceberDaPrecificacao({ tipo, desdobramentos: desdobr, valor: totalBase > 0 ? totalBase.toFixed(2) : '' });
 
+        // Se veio de um lead, pré-preencher dados do cliente
+        if (window.leadAtualParaProposta) {
+            const lead = window.leadAtualParaProposta;
+            setTimeout(() => {
+                const clienteInput = document.getElementById('prop-cliente');
+                const emailInput = document.getElementById('prop-email');
+                const whatsappInput = document.getElementById('prop-whatsapp');
+
+                if (clienteInput) clienteInput.value = lead.nome;
+                if (emailInput) emailInput.value = lead.email;
+                if (whatsappInput) whatsappInput.value = lead.whatsapp;
+
+                // Trigger update
+                propAtualizar();
+            }, 100);
+        }
+
         const toast = document.getElementById('toast');
         if (toast) { toast.textContent = 'Dados enviados para a proposta ✓'; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),2500); }
     }
@@ -4376,14 +4393,34 @@
         renderLeads();
     }
 
-    function abrirPropostaDoLead(leadId) {
+    function abrirPrecificacaoDoLead(leadId) {
         // Encontrar o lead
         const lead = leads.find(l => l.id === leadId);
         if (!lead) return;
 
-        // TODO: Abrir formulário de proposta pré-preenchido com dados do lead
-        // Por enquanto, just show alert
-        alert(`Criar proposta para ${lead.nome}\n\nEssa funcionalidade será implementada na Fase 3`);
+        // Salvar dados do lead temporariamente para usar na precificação
+        window.leadAtualParaProposta = {
+            leadId: lead.id,
+            nome: lead.nome,
+            email: lead.email,
+            whatsapp: lead.whatsapp
+        };
+
+        // Pré-preencher campo de nome do projeto na precificação
+        const nomeProjetoInput = document.querySelector('#precificacao .form-group input[placeholder*="Ex: Rebrand"]');
+        if (nomeProjetoInput) {
+            nomeProjetoInput.value = `Projeto - ${lead.nome}`;
+        }
+
+        // Ir para a página de precificação
+        showPage('precificacao', document.querySelector('[onclick*="precificacao"]'));
+
+        // Scroll para o topo
+        window.scrollTo(0, 0);
+    }
+
+    function abrirPropostaDoLead(leadId) {
+        abrirPrecificacaoDoLead(leadId);
     }
 
     function salvarCliente(e) {
